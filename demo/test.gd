@@ -8,7 +8,7 @@ const MedianCutQuantization = preload("res://gdgifexporter/quantization/median_c
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	run_test()
+	export_test()
 
 func export_test():
 	var t0 = Time.get_ticks_usec()
@@ -27,6 +27,8 @@ func export_gif(c):
 
 	# initialize exporter object with width and height of gif canvas
 	var exporter = GIFExporter.new(img.get_width(), img.get_height())
+	exporter.lzw.run_c_converter = c
+	
 	# write image using median cut quantization method and with one second animation delay
 	exporter.add_frame(img, 1, MedianCutQuantization)
 
@@ -83,8 +85,8 @@ func compare_algo(al:Callable, name_l:String,ar:Callable, name_r:String):
 
 func run_test():
 	compare_algo(
-		func(a,b): return LZWExtension.compress(a,b),
-		 "C copy",
-		 func(a,b): return LZWExtension.compress2(a,b),
-		 "C Rewrite")
+			lzw.compress_lzw,
+		 "GDScript Original",
+		func(a,b): return FastLZWCompressor.compress(a,b),
+		 "C Fast Rewrite")
 	pass

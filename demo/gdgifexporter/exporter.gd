@@ -166,11 +166,11 @@ func add_frame(image: Image, frame_delay: float, quantizator: Script) -> int:
 	var delay_time := calc_delay_time(frame_delay)
 
 	var color_table_indexes := color_table_to_indexes(color_table)
-	var compressed_image_result: Array = lzw.compress_lzw(
+	var compressed_image_result: Dictionary = lzw.compress_lzw(
 		image_converted_to_codes, color_table_indexes
 	)
-	var compressed_image_data: PackedByteArray = compressed_image_result[0]
-	var lzw_min_code_size: int = compressed_image_result[1]
+	var compressed_image_data: PackedByteArray = compressed_image_result["stream"]
+	var lzw_min_code_size: int = compressed_image_result["min_code_size"]
 
 	add_graphic_constrol_ext(delay_time, transparency_color_index)
 	add_image_descriptor(Vector2.ZERO, image.get_size(), color_table_bit_size(color_table))
@@ -178,7 +178,6 @@ func add_frame(image: Image, frame_delay: float, quantizator: Script) -> int:
 	add_image_data_block(lzw_min_code_size, compressed_image_data)
 
 	return Error.OK
-
 
 func add_frame_domekeeper_custom_raw(color_table, index_image_buffer, frame_delay, image_size, pos, transparent_index):
 	last_color_table = color_table
@@ -190,9 +189,12 @@ func add_frame_domekeeper_custom_raw(color_table, index_image_buffer, frame_dela
 	
 	var color_table_indexes := color_table_to_indexes(color_table)
 	#this call is 99% of execution-time.
-	var compressed_image_result = lzw.compress_lzw(index_image_buffer, color_table_indexes)
-	add_image_data_block(compressed_image_result[1],compressed_image_result[0])
-
+	var compressed_image_result: Dictionary = lzw.compress_lzw(
+		index_image_buffer, color_table_indexes
+	)
+	var compressed_image_data: PackedByteArray = compressed_image_result["stream"]
+	var lzw_min_code_size: int = compressed_image_result["min_code_size"]
+	add_image_data_block(lzw_min_code_size, compressed_image_data)
 
 ## Adds frame with last color information
 func add_frame_with_lci(image: Image, frame_delay: float) -> int:
@@ -209,11 +211,11 @@ func add_frame_with_lci(image: Image, frame_delay: float) -> int:
 	)
 
 	var color_table_indexes := color_table_to_indexes(last_color_table)
-	var compressed_image_result: Array = lzw.compress_lzw(
+	var compressed_image_result: Dictionary = lzw.compress_lzw(
 		image_converted_to_codes, color_table_indexes
 	)
-	var compressed_image_data: PackedByteArray = compressed_image_result[0]
-	var lzw_min_code_size: int = compressed_image_result[1]
+	var compressed_image_data: PackedByteArray = compressed_image_result["stream"]
+	var lzw_min_code_size: int = compressed_image_result["min_code_size"]
 
 	var delay_time := calc_delay_time(frame_delay)
 

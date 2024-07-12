@@ -33,7 +33,7 @@ struct PackedByteArrayHasher {
 };
 
 class LSBLZWBitPacker {
-private:
+public:
     int bit_index = 0;
     int stream = 0;
     PackedByteArray chunks;
@@ -70,7 +70,7 @@ public:
 };
 
 class CodeTable {
-private:
+public:
     std::unordered_map<PackedByteArray, int,PackedByteArrayHasher> lookup;
 
 public:
@@ -122,7 +122,34 @@ static CodeTable initialize_color_code_table(const Array& colors) {
     return result_code_table;
 }
 
-static Array compress_lzw(PackedByteArray image, const Array& colors) {
+static void print_state(Variant index_stream, int data_index, int k, Variant index_buffer, CodeTable code_table, int current_code_size, LSBLZWBitPacker binary_code_stream) {
+    UtilityFunctions::print("C State");
+
+
+    UtilityFunctions::print(String("Index: ") + String::num_int64(data_index));
+    UtilityFunctions::print(String("K: ") + String::num_int64(k));
+    UtilityFunctions::print(String("Buffer:") + index_buffer.operator String());
+
+    // Assuming index_stream has a slice method that returns a Variant or String
+    Variant slice = index_stream.call("slice", data_index, data_index + 10);
+    UtilityFunctions::print(String("Stream slice: ") + slice.operator String());
+
+    UtilityFunctions::print(String("Size: ") + String::num_int64(current_code_size));
+
+    Variant counter = code_table.counter;
+    Variant lookup_size = code_table.lookup.size();
+    UtilityFunctions::print(String("Table: ") + counter.operator String() + String(", ") + lookup_size.operator String());
+
+    Variant chunks_size = binary_code_stream.chunks.size();
+    Variant bit_index = binary_code_stream.bit_index;
+    Variant stream = binary_code_stream.stream;
+    UtilityFunctions::print(String("Out: ") + chunks_size.operator String() + String(", ") + bit_index.operator String() + String(", ") + stream.operator String());
+
+    slice = Variant(binary_code_stream.chunks).call("slice", binary_code_stream.chunks.size()-10);
+    UtilityFunctions::print(String("Out Slice: ") +slice.operator String());
+}
+
+static Dictionary compress_lzw(PackedByteArray image, const Array& colors) {
     CodeTable code_table = initialize_color_code_table(colors);
     
     int last_color_index = colors.size() - 1;
@@ -136,8 +163,8 @@ static Array compress_lzw(PackedByteArray image, const Array& colors) {
     PackedByteArray index_buffer = {index_stream[0]};
     int data_index = 1;
 
-    while (data_index < index_stream.size()) {
-        int k = index_stream.decode_s64(data_index);
+    while (data_index < index_stream.size()) {    
+        uint8_t k = index_stream[data_index];
         data_index ++;
         PackedByteArray new_index_buffer = {index_buffer};
         new_index_buffer.push_back(k);
@@ -167,19 +194,24 @@ static Array compress_lzw(PackedByteArray image, const Array& colors) {
             b.append(k);
             index_buffer = b;
         }
+        
+        //if(binary_code_stream.chunks.size() >= 27700){
+        //    print_state(index_stream, data_index, k,index_buffer,code_table, current_code_size,binary_code_stream);
+        //}
     }
 
     binary_code_stream.write_bits(code_table.find(index_buffer), current_code_size);
     binary_code_stream.write_bits(clear_code_index + 1, current_code_size);
 
-    //binary_code_stream.pack();
-    //int min_code_size = get_bits_number_for(clear_code_index) - 1;
-    //binary_code_stream.write_bits(min_code_size, 64);
-    return binary_code_stream.pack();
+    int min_code_size = get_bits_number_for(clear_code_index) - 1;
+    Dictionary out;
+    out[String("min_code_size")] = min_code_size;
+    out[String("stream")] = binary_code_stream.pack();
+    return out;
 }
 
 public:
-    static PackedByteArray compress(PackedByteArray src, PackedByteArray color_buf) {
+    static Dictionary compress(PackedByteArray src, PackedByteArray color_buf) {
         return compress_lzw(src, color_buf);
     }
 };

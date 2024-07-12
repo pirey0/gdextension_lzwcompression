@@ -3,6 +3,8 @@ extends RefCounted
 var lsbbitpacker := preload("./lsbbitpacker.gd")
 var lsbbitunpacker := preload("./lsbbitunpacker.gd")
 
+var run_c_converter := false
+
 class CodeTable:
 	var counter: int = 0
 	var lookup: Dictionary = {}
@@ -42,7 +44,21 @@ func initialize_color_code_table(colors: PackedByteArray) -> CodeTable:
 # compression and decompression done with source:
 # http://www.matthewflickinger.com/lab/whatsinagif/lzw_image_data.asp
 
-func compress_lzw(image: PackedByteArray, colors: PackedByteArray) -> Array:
+func print_state(index_stream, data_index, k,index_buffer, code_table:CodeTable,current_code_size, binary_code_stream:):
+	print("GD State")
+	prints("Index:", data_index)
+	prints("K: ", k)
+	print("Buffer:", index_buffer)
+	prints("Stream slice:", index_stream.slice(data_index, data_index +10))
+	prints("Size:",current_code_size)
+	prints("Table:", code_table.counter, code_table.lookup.size())
+	prints("Out:", binary_code_stream.chunks.size(), binary_code_stream.bit_index, binary_code_stream.stream)
+	prints("Out Slice:", binary_code_stream.chunks.slice(binary_code_stream.chunks.size()-10))
+
+func compress_lzw(image: PackedByteArray, colors: PackedByteArray) -> Dictionary:
+	if run_c_converter:
+		return LZWExtension.compress2(image,colors)
+	
 	# Initialize code table
 	var code_table: CodeTable = initialize_color_code_table(colors)
 	# Clear Code index is 2**<code size>
@@ -110,4 +126,4 @@ func compress_lzw(image: PackedByteArray, colors: PackedByteArray) -> Array:
 
 	var min_code_size: int = get_bits_number_for(clear_code_index) - 1
 
-	return [binary_code_stream.pack(), min_code_size]
+	return {"min_code_size" :min_code_size, "stream": binary_code_stream.pack()}

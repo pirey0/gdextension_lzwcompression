@@ -1,12 +1,14 @@
 #include "register_types.h"
 #include <godot_cpp/core/class_db.hpp>
 #include "lzw_gdextension.cpp"
+#include "lzw_gdextension2.cpp"
 
 void initialize_lzw_extension(ModuleInitializationLevel p_level) {
     if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
         return;
     }
     ClassDB::register_class<LZWExtension>();
+    ClassDB::register_class<LZWExtension2>();
 }
 
 void uninitialize_lzw_extension(ModuleInitializationLevel p_level) {

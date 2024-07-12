@@ -1,14 +1,14 @@
 extends Node
 
-var lzw := preload("res://gdgifexporter/gif-lzw/lzw.gd").new()
+var lzw := preload("res://gdgifexporter_custom/gif-lzw/lzw.gd").new()
 
-const GIFExporter = preload("res://gdgifexporter/exporter.gd")
+const GIFExporter = preload("res://gdgifexporter_custom/exporter.gd")
 # load quantization module that you want to use
-const MedianCutQuantization = preload("res://gdgifexporter/quantization/median_cut.gd")
+const MedianCutQuantization = preload("res://gdgifexporter_custom/quantization/median_cut.gd")
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	export_test()
+	run_test()
 
 func export_test():
 	var t0 = Time.get_ticks_usec()

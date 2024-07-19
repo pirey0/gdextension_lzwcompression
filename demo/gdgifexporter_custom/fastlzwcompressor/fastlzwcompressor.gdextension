@@ -7,3 +7,6 @@ compatibility_minimum = "4.2"
 
 windows.debug.x86_64 = "fastlzwcompressor.windows.template_release.x86_64.dll"
 windows.release.x86_64 = "fastlzwcompressor.windows.template_release.x86_64.dll"
+
+macos.debug = "fastlzwcompressor.macos.template_release.framework"
+macos.release = "fastlzwcompressor.macos.template_release.framework"
